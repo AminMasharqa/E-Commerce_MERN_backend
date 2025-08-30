@@ -4,6 +4,7 @@ import userRoute from "./routes/userRoute.ts";
 import { seedInitialProducts } from "./services/productService.ts";
 import productModel from "./models/productModel.ts";
 import productRoute from "./routes/productRoute.ts";
+import cartRoute from "./routes/cartRoute.ts";
 
 const app = express();
 app.use(express.json());
@@ -20,6 +21,7 @@ mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/ecommerce
 
 app.use('/user',userRoute);
 app.use('/product',productRoute);
+app.use('/cart',cartRoute);
 
 seedInitialProducts();
 
