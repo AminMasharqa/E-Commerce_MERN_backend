@@ -25,8 +25,6 @@ const validateJWT = (req: Request, res: Response, next: NextFunction) => {
             
             const userPayload = payload as {email:string,userId?:string,firstName:string,lastName:string};
             
-            console.log("JWT payload:", userPayload);
-            
             if (!userPayload?.email) {
                 return res.status(401).json({ message: "Email is required" });
             }
