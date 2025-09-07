@@ -114,3 +114,52 @@ export const updateItemInCart = async ({
     return { data: { message: "Internal server error" }, statusCode: 500 };
   }
 };
+
+
+type RemoveItemFromCartParams = { userId: string; productId: string };
+
+export const removeItemFromCart = async ({
+  userId,
+  productId,
+}: RemoveItemFromCartParams): Promise<ServiceResult<any>> => {
+  try {
+    const cart = await getActiveCartForUser({ userId });
+
+    // Find item by productId (handle ObjectId vs string)
+    const idx = cart.items.findIndex(
+      (p: any) => p.productId?.toString?.() === productId
+    );
+
+    if (idx === -1) {
+      return { data: { message: "Item does not exist in the cart" }, statusCode: 400 };
+    }
+
+    // Remove the item
+    cart.items.splice(idx, 1);
+
+    // Recalculate cart total and persist
+    cart.totalAmount = computeTotalAmount(cart.items);
+    await cart.save();
+
+    return { data: cart, statusCode: 200 };
+  } catch (error) {
+    console.error("Error removing cart item:", error);
+    return { data: { message: "Internal server error" }, statusCode: 500 };
+  }
+};
+
+
+type ClearCartParams = { userId: string };
+export const clearCart = async ({ userId }: ClearCartParams): Promise<ServiceResult<any>> => {
+  try {
+    const cart = await getActiveCartForUser({ userId });
+    cart.items = [];
+    cart.totalAmount = 0;
+    await cart.save();
+    return { data: cart, statusCode: 200 };
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    return { data: { message: "Internal server error" }, statusCode: 500 };
+  }
+};
+
