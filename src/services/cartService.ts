@@ -1,5 +1,6 @@
 // If you already have these imports, keep them. Just ensure they're enabled (not commented out).
 import cartModel, { /* optional types like ICart, ICartItem */ } from "../models/cartModel.ts";
+import { orderModel } from "../models/orderModelt.ts";
 import productModel from "../models/productModel.ts";
 
 // ----- Types -----
@@ -163,3 +164,90 @@ export const clearCart = async ({ userId }: ClearCartParams): Promise<ServiceRes
   }
 };
 
+
+type CheckoutCartParams = { userId: string , address: string };
+
+export const checkoutCart = async ({ 
+  userId,
+  address
+}: CheckoutCartParams): Promise<ServiceResult<any>> => {
+  try {
+    if (!address) {
+      return { data: { message: "Address is required" }, statusCode: 400 };
+    }
+    // Get the user's active cart
+    const cart = await getActiveCartForUser({ userId });
+
+    // Check if cart has items
+    if (!cart.items || cart.items.length === 0) {
+      return { data: { message: "Cart is empty" }, statusCode: 400 };
+    }
+
+    // Validate stock availability for all items before proceeding
+    for (const cartItem of cart.items) {
+      const product = await productModel.findById(cartItem.productId);
+      if (!product) {
+        return { 
+          data: { message: `Product not found: ${cartItem.productId}` }, 
+          statusCode: 400 
+        };
+      }
+      
+      if (product.stock < cartItem.quantity) {
+        return { 
+          data: { 
+            message: `Insufficient stock for ${product.title}. Available: ${product.stock}, Requested: ${cartItem.quantity}` 
+          }, 
+          statusCode: 400 
+        };
+      }
+    }
+
+    // Create order items from cart items
+    const orderItems = await Promise.all(
+      cart.items.map(async (cartItem: any) => {
+        const product = await productModel.findById(cartItem.productId);
+        return {
+          productTitle: product!.title,
+          productImage: product!.image || '',
+          unitPrice: cartItem.unitPrice,
+          quantity: cartItem.quantity,
+        };
+      })
+    );
+
+    // Create the order
+    const newOrder = await orderModel.create({
+      orderItems,
+      total: cart.totalAmount,
+      userId: cart.userId,
+      address,
+    });
+
+    // Update product stock (decrement by purchased quantity)
+    for (const cartItem of cart.items) {
+      await productModel.findByIdAndUpdate(
+        cartItem.productId,
+        { $inc: { stock: -cartItem.quantity } }
+      );
+    }
+
+    // Mark cart as completed and clear items
+    cart.status = "completed";
+    cart.items = [];
+    cart.totalAmount = 0;
+    await cart.save();
+
+    return { 
+      data: { 
+        message: "Order placed successfully", 
+        order: newOrder 
+      }, 
+      statusCode: 200
+    };
+
+  } catch (error) {
+    console.error("Error during checkout:", error);
+    return { data: { message: "Internal server error during checkout" }, statusCode: 500 };
+  }
+};

@@ -1,10 +1,11 @@
-import express, { type Request, type Response } from "express";
+import express, { Router, type Request, type Response } from "express";
 import { 
   getActiveCartForUser, 
   addItemToCart, 
   updateItemInCart, 
   removeItemFromCart,
-  clearCart
+  clearCart,
+  checkoutCart
 } from "../services/cartService.ts";
 import validateJWT from "../middlewares/validateJWT.ts";
 import type { ExtendedRequest } from "../types/extendedRequest.ts";
@@ -148,4 +149,13 @@ router.delete("/",validateJWT, async(req: ExtendedRequest,res)=> {
   }
 });
 
+router.post("/checkout",validateJWT, async(req: ExtendedRequest,res)=> {
+  const userId = extractUserId(req);
+  const {address} = req.body;
+  if (!userId) {
+    return res.status(400).json({ message: "userId is required" });
+  }
+  const response = await checkoutCart({userId,address});
+  res.status(response.statusCode).json(response.data);
+})
 export default router;
