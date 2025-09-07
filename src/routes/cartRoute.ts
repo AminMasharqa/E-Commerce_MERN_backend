@@ -1,8 +1,8 @@
 import express, { Router, type Request, type Response } from "express";
-import { 
-  getActiveCartForUser, 
-  addItemToCart, 
-  updateItemInCart, 
+import {
+  getActiveCartForUser,
+  addItemToCart,
+  updateItemInCart,
   removeItemFromCart,
   clearCart,
   checkoutCart
@@ -19,7 +19,7 @@ function extractUserId(req: Request | ExtendedRequest): string | undefined {
   if (extReq.user?._id) {
     return extReq.user._id.toString();
   }
-  
+
   // Fallback to other possible locations
   // @ts-ignore - depends on your middleware typing
   return req.user?.id ?? (req.body?.userId as string | undefined);
@@ -37,8 +37,8 @@ router.get("/", validateJWT, async (req: Request, res: Response) => {
     return res.status(200).json(cart);
   } catch (err: any) {
     console.error('Error fetching cart:', err);
-    return res.status(500).json({ 
-      message: err?.message ?? "Failed to fetch cart" 
+    return res.status(500).json({
+      message: err?.message ?? "Failed to fetch cart"
     });
   }
 });
@@ -58,8 +58,8 @@ router.post("/items", validateJWT, async (req: Request, res: Response) => {
 
     const qtyNum = Number(quantity ?? 1);
     if (!Number.isInteger(qtyNum) || qtyNum <= 0) {
-      return res.status(400).json({ 
-        message: "quantity must be a positive integer" 
+      return res.status(400).json({
+        message: "quantity must be a positive integer"
       });
     }
 
@@ -67,8 +67,8 @@ router.post("/items", validateJWT, async (req: Request, res: Response) => {
     return res.status(result.statusCode).json(result.data);
   } catch (err: any) {
     console.error('Error adding item to cart:', err);
-    return res.status(500).json({ 
-      message: err?.message ?? "Failed to add item to cart" 
+    return res.status(500).json({
+      message: err?.message ?? "Failed to add item to cart"
     });
   }
 });
@@ -88,22 +88,22 @@ router.put("/items", validateJWT, async (req: ExtendedRequest, res: Response) =>
 
     const qtyNum = Number(quantity);
     if (!Number.isInteger(qtyNum) || qtyNum <= 0) {
-      return res.status(400).json({ 
-        message: "quantity must be a positive integer" 
+      return res.status(400).json({
+        message: "quantity must be a positive integer"
       });
     }
 
-    const response = await updateItemInCart({ 
-      userId, 
-      productId, 
-      quantity: qtyNum 
+    const response = await updateItemInCart({
+      userId,
+      productId,
+      quantity: qtyNum
     });
-    
+
     return res.status(response.statusCode).json(response.data);
   } catch (err: any) {
     console.error('Error updating cart item:', err);
-    return res.status(500).json({ 
-      message: err?.message ?? "Failed to update cart item" 
+    return res.status(500).json({
+      message: err?.message ?? "Failed to update cart item"
     });
   }
 });
@@ -121,27 +121,27 @@ router.delete("/items/:productId", validateJWT, async (req: ExtendedRequest, res
       return res.status(400).json({ message: "productId is required" });
     }
 
-    const response = await removeItemFromCart({ 
-      userId, 
-      productId 
+    const response = await removeItemFromCart({
+      userId,
+      productId
     });
-    
+
     return res.status(response.statusCode).json(response.data);
   } catch (err: any) {
     console.error('Error removing cart item:', err);
-    return res.status(500).json({ 
-      message: err?.message ?? "Failed to remove cart item" 
+    return res.status(500).json({
+      message: err?.message ?? "Failed to remove cart item"
     });
   }
 });
 
-router.delete("/",validateJWT, async(req: ExtendedRequest,res)=> {
+router.delete("/", validateJWT, async (req: ExtendedRequest, res) => {
   try {
     const userId = extractUserId(req);
     if (!userId) {
       return res.status(400).json({ message: "userId is required" });
     }
-    const response = await clearCart({userId});
+    const response = await clearCart({ userId });
     return res.status(response.statusCode).json(response.data);
   } catch (err: any) {
     console.error('Error clearing cart:', err);
@@ -149,13 +149,18 @@ router.delete("/",validateJWT, async(req: ExtendedRequest,res)=> {
   }
 });
 
-router.post("/checkout",validateJWT, async(req: ExtendedRequest,res)=> {
-  const userId = extractUserId(req);
-  const {address} = req.body;
-  if (!userId) {
-    return res.status(400).json({ message: "userId is required" });
+router.post("/checkout", validateJWT, async (req: ExtendedRequest, res) => {
+  try {
+    const userId = extractUserId(req);
+    const { address } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+    const response = await checkoutCart({ userId, address });
+    res.status(response.statusCode).json(response.data);
+  } catch (error) {
+    console.error('Error in checkout:', error);
+    res.status(500).json({ message: "Failed to checkout" });
   }
-  const response = await checkoutCart({userId,address});
-  res.status(response.statusCode).json(response.data);
 })
 export default router;

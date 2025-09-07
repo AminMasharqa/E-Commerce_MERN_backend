@@ -4,8 +4,13 @@ import { getProducts } from "../services/productService.ts";
 const router = express.Router()
 
 router.get('/',async (req,res)=>{
-    const products = await getProducts();
-    res.status(200).send(products);
+    try {
+        const products = await getProducts();
+        res.status(200).send(products);
+    } catch (error) {
+        console.error('Error in get products route:', error);
+        res.status(500).send('Failed to fetch products');
+    }
 });
 
 export default router;

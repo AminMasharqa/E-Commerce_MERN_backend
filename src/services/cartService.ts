@@ -29,10 +29,15 @@ const createCartForUser = async ({ userId }: CreateCartForUserParams) => {
 };
 
 export const getActiveCartForUser = async ({ userId }: GetActiveCartForUserParams) => {
-  if (!userId) throw new Error("userId is required");
-  let cart = await cartModel.findOne({ userId, status: "active" });
-  if (!cart) cart = await createCartForUser({ userId });
-  return cart;
+  try {
+    if (!userId) throw new Error("userId is required");
+    let cart = await cartModel.findOne({ userId, status: "active" });
+    if (!cart) cart = await createCartForUser({ userId });
+    return cart;
+  } catch (error) {
+    console.error('Error getting active cart:', error);
+    throw error;
+  }
 };
 
 export const addItemToCart = async ({
@@ -40,39 +45,44 @@ export const addItemToCart = async ({
   productId,
   quantity,
 }: AddItemToCartParams): Promise<ServiceResult<any>> => {
-  // Ensure we have a cart
-  const cart = await getActiveCartForUser({ userId });
+  try {
+    // Ensure we have a cart
+    const cart = await getActiveCartForUser({ userId });
 
-  // Check if already in cart
-  const existsInCart = cart.items.find(
-    (p: any) => p.productId?.toString?.() === productId
-  );
-  if (existsInCart) {
-    return { data: { message: "Item already exists in the cart" }, statusCode: 400 };
+    // Check if already in cart
+    const existsInCart = cart.items.find(
+      (p: any) => p.productId?.toString?.() === productId
+    );
+    if (existsInCart) {
+      return { data: { message: "Item already exists in the cart" }, statusCode: 400 };
+    }
+
+    // Validate product
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return { data: { message: "Product not found" }, statusCode: 400 };
+    }
+
+    if (product.stock < quantity) {
+      return { data: { message: "Low stock for item" }, statusCode: 400 };
+    }
+
+    // Push new item (Mongoose will cast string to ObjectId if schema is set)
+    cart.items.push({
+      productId: product._id as any,
+      unitPrice: product.price,
+      quantity,
+    } as any);
+
+    // Update totalAmount
+    cart.totalAmount = computeTotalAmount(cart.items);
+    await cart.save();
+
+    return { data: cart, statusCode: 200 };
+  } catch (error) {
+    console.error('Error adding item to cart:', error);
+    return { data: { message: "Failed to add item to cart" }, statusCode: 500 };
   }
-
-  // Validate product
-  const product = await productModel.findById(productId);
-  if (!product) {
-    return { data: { message: "Product not found" }, statusCode: 400 };
-  }
-
-  if (product.stock < quantity) {
-    return { data: { message: "Low stock for item" }, statusCode: 400 };
-  }
-
-  // Push new item (Mongoose will cast string to ObjectId if schema is set)
-  cart.items.push({
-    productId: product._id as any,
-    unitPrice: product.price,
-    quantity,
-  } as any);
-
-  // Update totalAmount
-  cart.totalAmount = computeTotalAmount(cart.items);
-  await cart.save();
-
-  return { data: cart, statusCode: 200 };
 };
 
 export const updateItemInCart = async ({

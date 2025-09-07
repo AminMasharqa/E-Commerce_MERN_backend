@@ -16,8 +16,13 @@ const validateJWT = (req: Request, res: Response, next: NextFunction) => {
         return res.status(401).json({ message: "Token is required" });
     }
 
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        return res.status(500).json({ message: "JWT_SECRET environment variable is required" });
+    }
+
     jwt.verify(token,
-         process.env.JWT_SECRET || "default-secret",
+         jwtSecret,
          async (err, payload) => {
             if (err) {
                 return res.status(401).json({ message: "Invalid token" });

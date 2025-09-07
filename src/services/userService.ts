@@ -15,38 +15,51 @@ interface LoginParams {
     password: string;
 }
 export const register = async({firstName,lastName,email,password}: RegisterParams) =>{
-    const findUser = await userModel.findOne({email});
+    try {
+        const findUser = await userModel.findOne({email});
 
-    if(findUser){
-        return {data : "User already exists!",statusCode:400};
+        if(findUser){
+            return {data : "User already exists!",statusCode:400};
+        }
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10');
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const newUser = new userModel({ email, password: hashedPassword, firstName, lastName });
+
+        await newUser.save();
+
+        return {data: generateJWT({firstName,lastName,email}),statusCode:200};
+    } catch (error) {
+        console.error('Error in register:', error);
+        return {data: "Registration failed", statusCode: 500};
     }
-    const hashedPassword = await bcrypt.hash(password,10);
-    const newUser = new userModel({ email, password: hashedPassword, firstName, lastName });
-
-    await newUser.save();
-
-    return {data: generateJWT({firstName,lastName,email}),statusCode:200};
-
 }
 
 export const login = async ({email,password}:LoginParams) =>{
-    const findUser = await userModel.findOne({email});
+    try {
+        const findUser = await userModel.findOne({email});
 
-    if(!findUser){
+        if(!findUser){
+            return {data : "Incorrect email or password!", statusCode: 400};
+        }
+
+        const passwordMatch  = await bcrypt.compare(password, findUser.password);
+
+        if(passwordMatch){
+            return {data:generateJWT({firstName:findUser.firstName,lastName:findUser.lastName,email:findUser.email}), statusCode:200};
+        }
+
         return {data : "Incorrect email or password!", statusCode: 400};
+    } catch (error) {
+        console.error('Error in login:', error);
+        return {data: "Login failed", statusCode: 500};
     }
-
-    const passwordMatch  = await bcrypt.compare(password, findUser.password);
-
-    if(passwordMatch){
-        return {data:generateJWT({firstName:findUser.firstName,lastName:findUser.lastName,email:findUser.email}), statusCode:200};
-    }
-
-    return {data : "Incorrect email or password!", statusCode: 400};
 }
 
 const generateJWT = (data:any) =>{
-    
-    return jwt.sign(data, process.env.JWT_SECRET || "default-secret");
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        throw new Error('JWT_SECRET environment variable is required');
+    }
+    return jwt.sign(data, jwtSecret);
 }
 
