@@ -1,6 +1,8 @@
 import express, { type Request, type Response } from "express";
 import { getActiveCartForUser, addItemToCart } from "../services/cartService.ts";
 import validateJWT from "../middlewares/validateJWT.ts";
+import type { ExtendedRequest } from "../types/extendedRequest.ts";
+import { updateItemInCart } from "../services/cartService.ts";
 
 const router = express.Router();
 
@@ -42,5 +44,12 @@ router.post("/items", validateJWT, async (req: Request, res: Response) => {
     return res.status(500).send({ message: err?.message ?? "Failed to add item to cart" });
   }
 });
+
+router.put("/items",validateJWT, async(req: ExtendedRequest,res)=> {
+  const userId = req?.user?._id;
+  const {productId,quantity } = req.body;
+  const response = await updateItemInCart({userId,productId,quantity});
+  res.status(response.statusCode).send(response.data);
+})
 
 export default router;

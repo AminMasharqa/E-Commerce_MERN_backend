@@ -6,6 +6,7 @@ import productModel from "../models/productModel.ts";
 type CreateCartForUserParams = { userId: string };
 type GetActiveCartForUserParams = { userId: string };
 type AddItemToCartParams = { userId: string; productId: string; quantity: number };
+type UpdateItemInCartParams = { productId: any; quantity: number; userId: string };
 
 type ServiceResult<T> = { data: T; statusCode: number };
 
@@ -55,10 +56,9 @@ export const addItemToCart = async ({
     return { data: { message: "Product not found" }, statusCode: 400 };
   }
 
-  if(product.stock < quantity){
-    return {data: "Low stock for item", statusCode: 400};
+  if (product.stock < quantity) {
+    return { data: { message: "Low stock for item" }, statusCode: 400 };
   }
-
 
   // Push new item (Mongoose will cast string to ObjectId if schema is set)
   cart.items.push({
@@ -72,4 +72,45 @@ export const addItemToCart = async ({
   await cart.save();
 
   return { data: cart, statusCode: 200 };
+};
+
+export const updateItemInCart = async ({
+  productId,
+  userId,
+  quantity
+}: UpdateItemInCartParams): Promise<ServiceResult<any>> => {
+  try {
+    const cart = await getActiveCartForUser({ userId });
+
+    // Check if item exists in cart
+    const existingItem = cart.items.find(
+      (p: any) => p.productId?.toString?.() === productId
+    );
+    
+    if (!existingItem) {
+      return { data: { message: "Item does not exist in the cart" }, statusCode: 400 };
+    }
+
+    // Validate product and stock
+    const product = await productModel.findById(productId);
+    if (!product) {
+      return { data: { message: "Product not found" }, statusCode: 400 };
+    }
+
+    if (product.stock < quantity) {
+      return { data: { message: "Insufficient stock for requested quantity" }, statusCode: 400 };
+    }
+
+    // Update the quantity
+    existingItem.quantity = quantity;
+
+    // Recalculate total amount
+    cart.totalAmount = computeTotalAmount(cart.items);
+    await cart.save();
+
+    return { data: cart, statusCode: 200 };
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    return { data: { message: "Internal server error" }, statusCode: 500 };
+  }
 };
