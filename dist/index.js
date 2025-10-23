@@ -1,18 +1,23 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 // Load environment variables first
-import dotenv from 'dotenv';
-dotenv.config();
-import express, {} from 'express';
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const express_1 = __importDefault(require("express"));
 // import as type
-import cors from 'cors';
-import { default as helmet } from 'helmet';
-import morgan from 'morgan';
-import { connectDatabase, disconnectDatabase } from './config/database.js';
-import userRoute from './routes/userRoute.js';
-import productRoute from './routes/productRoute.js';
-import cartRoute from './routes/cartRoute.js';
-import { seedInitialProducts } from './services/productService.js';
-import { errorHandler } from './middlewares/errorHandler.js';
-import { notFoundHandler } from './middlewares/notFoundHandler.js';
+const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
+const morgan_1 = __importDefault(require("morgan"));
+const database_js_1 = require("./config/database.js");
+const userRoute_js_1 = __importDefault(require("./routes/userRoute.js"));
+const productRoute_js_1 = __importDefault(require("./routes/productRoute.js"));
+const cartRoute_js_1 = __importDefault(require("./routes/cartRoute.js"));
+const productService_js_1 = require("./services/productService.js");
+const errorHandler_js_1 = require("./middlewares/errorHandler.js");
+const notFoundHandler_js_1 = require("./middlewares/notFoundHandler.js");
 // Environment variables with validation
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -25,25 +30,25 @@ if (missingEnvVars.length > 0) {
     process.exit(1);
 }
 // Create Express app
-const app = express();
+const app = (0, express_1.default)();
 // Security middleware
-app.use(helmet());
+app.use((0, helmet_1.default)());
 // CORS configuration
-app.use(cors({
+app.use((0, cors_1.default)({
     origin: NODE_ENV === 'production' ? ALLOWED_ORIGINS : '*',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express_1.default.json({ limit: '10mb' }));
+app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 // Logging middleware
 if (NODE_ENV === 'development') {
-    app.use(morgan('dev'));
+    app.use((0, morgan_1.default)('dev'));
 }
 else {
-    app.use(morgan('combined'));
+    app.use((0, morgan_1.default)('combined'));
 }
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -54,13 +59,13 @@ app.get('/health', (_req, res) => {
     });
 });
 // API routes
-app.use('/user', userRoute);
-app.use('/product', productRoute);
-app.use('/cart', cartRoute);
+app.use('/user', userRoute_js_1.default);
+app.use('/product', productRoute_js_1.default);
+app.use('/cart', cartRoute_js_1.default);
 // 404 handler for undefined routes
-app.use(notFoundHandler);
+app.use(notFoundHandler_js_1.notFoundHandler);
 // Global error handler (must be last)
-app.use(errorHandler);
+app.use(errorHandler_js_1.errorHandler);
 // Server instance
 let server;
 // Graceful shutdown handler
@@ -70,7 +75,7 @@ const gracefulShutdown = async (signal) => {
         server.close(async () => {
             console.log('HTTP server closed');
             try {
-                await disconnectDatabase();
+                await (0, database_js_1.disconnectDatabase)();
                 console.log('Database connection closed');
                 process.exit(0);
             }
@@ -90,11 +95,11 @@ const gracefulShutdown = async (signal) => {
 const startServer = async () => {
     try {
         // Connect to database
-        await connectDatabase();
+        await (0, database_js_1.connectDatabase)();
         console.log('✓ Database connected successfully');
         // Seed products only in development or if flag is set
         if (NODE_ENV === 'development' || process.env.SEED_DATA === 'true') {
-            await seedInitialProducts();
+            await (0, productService_js_1.seedInitialProducts)();
             console.log('✓ Initial products seeded');
         }
         // Start server
@@ -131,5 +136,4 @@ process.on('unhandledRejection', (reason) => {
 });
 // Start the server
 startServer();
-export default app;
-//# sourceMappingURL=index.js.map
+exports.default = app;

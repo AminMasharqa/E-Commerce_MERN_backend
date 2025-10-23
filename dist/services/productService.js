@@ -1,7 +1,13 @@
-import productModel from "../models/productModel.js";
-export const createProduct = async (product) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.seedInitialProducts = exports.deleteProduct = exports.updateProduct = exports.getProductById = exports.getProducts = exports.createProduct = void 0;
+const productModel_js_1 = __importDefault(require("../models/productModel.js"));
+const createProduct = async (product) => {
     try {
-        const newProduct = new productModel(product);
+        const newProduct = new productModel_js_1.default(product);
         await newProduct.save();
         return newProduct;
     }
@@ -10,9 +16,10 @@ export const createProduct = async (product) => {
         throw error;
     }
 };
-export const getProducts = async () => {
+exports.createProduct = createProduct;
+const getProducts = async () => {
     try {
-        const products = await productModel.find();
+        const products = await productModel_js_1.default.find();
         return products;
     }
     catch (error) {
@@ -20,9 +27,10 @@ export const getProducts = async () => {
         throw error;
     }
 };
-export const getProductById = async (id) => {
+exports.getProducts = getProducts;
+const getProductById = async (id) => {
     try {
-        const product = await productModel.findById(id);
+        const product = await productModel_js_1.default.findById(id);
         return product;
     }
     catch (error) {
@@ -30,9 +38,10 @@ export const getProductById = async (id) => {
         throw error;
     }
 };
-export const updateProduct = async (id, product) => {
+exports.getProductById = getProductById;
+const updateProduct = async (id, product) => {
     try {
-        const updatedProduct = await productModel.findByIdAndUpdate(id, product, { new: true });
+        const updatedProduct = await productModel_js_1.default.findByIdAndUpdate(id, product, { new: true });
         return updatedProduct;
     }
     catch (error) {
@@ -40,21 +49,23 @@ export const updateProduct = async (id, product) => {
         throw error;
     }
 };
-export const deleteProduct = async (id) => {
+exports.updateProduct = updateProduct;
+const deleteProduct = async (id) => {
     try {
-        await productModel.findByIdAndDelete(id);
+        await productModel_js_1.default.findByIdAndDelete(id);
     }
     catch (error) {
         console.error('Error deleting product:', error);
         throw error;
     }
 };
-export const seedInitialProducts = async () => {
+exports.deleteProduct = deleteProduct;
+const seedInitialProducts = async () => {
     try {
-        const products = await productModel.find();
+        const products = await productModel_js_1.default.find();
         if (products.length > 0)
             return;
-        await productModel.insertMany([
+        await productModel_js_1.default.insertMany([
             { title: "Dell Labtop", image: "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/page/category/laptop/dell-pro-laptops-category-image-800x620.png?fmt=png-alpha&wid=800&hei=620", price: 100, stock: 10 },
             { title: "Asus Labtop", image: "https://dlcdnwebimgs.asus.com/gain/9d10759b-252c-463c-a9fe-40026ad250e3/", price: 200, stock: 20 },
             { title: "HP Labtop", image: "https://cdn.mos.cms.futurecdn.net/pyL3b8cis5dcmUvgbe9ygV-2000-80.jpg", price: 300, stock: 30 },
@@ -65,4 +76,4 @@ export const seedInitialProducts = async () => {
         throw error;
     }
 };
-//# sourceMappingURL=productService.js.map
+exports.seedInitialProducts = seedInitialProducts;

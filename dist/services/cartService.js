@@ -1,14 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkoutCart = exports.clearCart = exports.removeItemFromCart = exports.updateItemInCart = exports.addItemToCart = exports.getActiveCartForUser = void 0;
 // If you already have these imports, keep them. Just ensure they're enabled (not commented out).
-import cartModel, {} from "../models/cartModel.js";
-import { orderModel } from "../models/orderModelt.js";
-import productModel from "../models/productModel.js";
+const cartModel_js_1 = __importDefault(require("../models/cartModel.js"));
+const orderModelt_js_1 = require("../models/orderModelt.js");
+const productModel_js_1 = __importDefault(require("../models/productModel.js"));
 // ----- Helpers -----
 function computeTotalAmount(items) {
     return items.reduce((sum, it) => sum + (Number(it.unitPrice) || 0) * (Number(it.quantity) || 0), 0);
 }
 // ----- Core -----
 const createCartForUser = async ({ userId }) => {
-    const cart = await cartModel.create({
+    const cart = await cartModel_js_1.default.create({
         userId,
         items: [],
         totalAmount: 0,
@@ -17,16 +23,16 @@ const createCartForUser = async ({ userId }) => {
     await cart.save();
     return cart;
 };
-export const getActiveCartForUser = async ({ userId, populateProduct }) => {
+const getActiveCartForUser = async ({ userId, populateProduct }) => {
     try {
         if (!userId)
             throw new Error("userId is required");
         let cart;
         if (populateProduct) {
-            cart = await cartModel.findOne({ userId, status: "active" }).populate('items.productId');
+            cart = await cartModel_js_1.default.findOne({ userId, status: "active" }).populate('items.productId');
         }
         else {
-            cart = await cartModel.findOne({ userId, status: "active" });
+            cart = await cartModel_js_1.default.findOne({ userId, status: "active" });
         }
         if (!cart)
             cart = await createCartForUser({ userId });
@@ -37,17 +43,18 @@ export const getActiveCartForUser = async ({ userId, populateProduct }) => {
         throw error;
     }
 };
-export const addItemToCart = async ({ userId, productId, quantity, }) => {
+exports.getActiveCartForUser = getActiveCartForUser;
+const addItemToCart = async ({ userId, productId, quantity, }) => {
     try {
         // Ensure we have a cart
-        const cart = await getActiveCartForUser({ userId });
+        const cart = await (0, exports.getActiveCartForUser)({ userId });
         // Check if already in cart
         const existsInCart = cart.items.find((p) => p.productId?.toString?.() === productId);
         if (existsInCart) {
             return { data: { message: "Item already exists in the cart" }, statusCode: 400 };
         }
         // Validate product
-        const product = await productModel.findById(productId);
+        const product = await productModel_js_1.default.findById(productId);
         if (!product) {
             return { data: { message: "Product not found" }, statusCode: 400 };
         }
@@ -63,7 +70,7 @@ export const addItemToCart = async ({ userId, productId, quantity, }) => {
         // Update totalAmount
         cart.totalAmount = computeTotalAmount(cart.items);
         await cart.save();
-        const updatedCart = await getActiveCartForUser({ userId, populateProduct: true });
+        const updatedCart = await (0, exports.getActiveCartForUser)({ userId, populateProduct: true });
         return { data: updatedCart, statusCode: 200 };
     }
     catch (error) {
@@ -71,16 +78,17 @@ export const addItemToCart = async ({ userId, productId, quantity, }) => {
         return { data: { message: "Failed to add item to cart" }, statusCode: 500 };
     }
 };
-export const updateItemInCart = async ({ productId, userId, quantity }) => {
+exports.addItemToCart = addItemToCart;
+const updateItemInCart = async ({ productId, userId, quantity }) => {
     try {
-        const cart = await getActiveCartForUser({ userId });
+        const cart = await (0, exports.getActiveCartForUser)({ userId });
         // Check if item exists in cart
         const existingItem = cart.items.find((p) => p.productId?.toString?.() === productId);
         if (!existingItem) {
             return { data: { message: "Item does not exist in the cart" }, statusCode: 400 };
         }
         // Validate product and stock
-        const product = await productModel.findById(productId);
+        const product = await productModel_js_1.default.findById(productId);
         if (!product) {
             return { data: { message: "Product not found" }, statusCode: 400 };
         }
@@ -92,7 +100,7 @@ export const updateItemInCart = async ({ productId, userId, quantity }) => {
         // Recalculate total amount
         cart.totalAmount = computeTotalAmount(cart.items);
         await cart.save();
-        const updatedCart = await getActiveCartForUser({ userId, populateProduct: true });
+        const updatedCart = await (0, exports.getActiveCartForUser)({ userId, populateProduct: true });
         return { data: updatedCart, statusCode: 200 };
     }
     catch (error) {
@@ -100,9 +108,10 @@ export const updateItemInCart = async ({ productId, userId, quantity }) => {
         return { data: { message: "Internal server error" }, statusCode: 500 };
     }
 };
-export const removeItemFromCart = async ({ userId, productId, }) => {
+exports.updateItemInCart = updateItemInCart;
+const removeItemFromCart = async ({ userId, productId, }) => {
     try {
-        const cart = await getActiveCartForUser({ userId });
+        const cart = await (0, exports.getActiveCartForUser)({ userId });
         // Find item by productId (handle ObjectId vs string)
         const idx = cart.items.findIndex((p) => p.productId?.toString?.() === productId);
         if (idx === -1) {
@@ -113,7 +122,7 @@ export const removeItemFromCart = async ({ userId, productId, }) => {
         // Recalculate cart total and persist
         cart.totalAmount = computeTotalAmount(cart.items);
         await cart.save();
-        const updatedCart = await getActiveCartForUser({ userId, populateProduct: true });
+        const updatedCart = await (0, exports.getActiveCartForUser)({ userId, populateProduct: true });
         return { data: updatedCart, statusCode: 200 };
     }
     catch (error) {
@@ -121,9 +130,10 @@ export const removeItemFromCart = async ({ userId, productId, }) => {
         return { data: { message: "Internal server error" }, statusCode: 500 };
     }
 };
-export const clearCart = async ({ userId }) => {
+exports.removeItemFromCart = removeItemFromCart;
+const clearCart = async ({ userId }) => {
     try {
-        const cart = await getActiveCartForUser({ userId });
+        const cart = await (0, exports.getActiveCartForUser)({ userId });
         cart.items = [];
         cart.totalAmount = 0;
         await cart.save();
@@ -134,20 +144,21 @@ export const clearCart = async ({ userId }) => {
         return { data: { message: "Internal server error" }, statusCode: 500 };
     }
 };
-export const checkoutCart = async ({ userId, address }) => {
+exports.clearCart = clearCart;
+const checkoutCart = async ({ userId, address }) => {
     try {
         if (!address) {
             return { data: { message: "Address is required" }, statusCode: 400 };
         }
         // Get the user's active cart
-        const cart = await getActiveCartForUser({ userId });
+        const cart = await (0, exports.getActiveCartForUser)({ userId });
         // Check if cart has items
         if (!cart.items || cart.items.length === 0) {
             return { data: { message: "Cart is empty" }, statusCode: 400 };
         }
         // Validate stock availability for all items before proceeding
         for (const cartItem of cart.items) {
-            const product = await productModel.findById(cartItem.productId);
+            const product = await productModel_js_1.default.findById(cartItem.productId);
             if (!product) {
                 return {
                     data: { message: `Product not found: ${cartItem.productId}` },
@@ -165,7 +176,7 @@ export const checkoutCart = async ({ userId, address }) => {
         }
         // Create order items from cart items
         const orderItems = await Promise.all(cart.items.map(async (cartItem) => {
-            const product = await productModel.findById(cartItem.productId);
+            const product = await productModel_js_1.default.findById(cartItem.productId);
             return {
                 productTitle: product.title,
                 productImage: product.image || '',
@@ -178,7 +189,7 @@ export const checkoutCart = async ({ userId, address }) => {
         const shipping = subtotal >= 50 ? 0 : 5.99;
         const tax = subtotal * 0.085;
         // Create the order
-        const newOrder = await orderModel.create({
+        const newOrder = await orderModelt_js_1.orderModel.create({
             orderItems,
             total: cart.totalAmount,
             subtotal: Math.round(subtotal * 100) / 100,
@@ -190,7 +201,7 @@ export const checkoutCart = async ({ userId, address }) => {
         });
         // Update product stock (decrement by purchased quantity)
         for (const cartItem of cart.items) {
-            await productModel.findByIdAndUpdate(cartItem.productId, { $inc: { stock: -cartItem.quantity } });
+            await productModel_js_1.default.findByIdAndUpdate(cartItem.productId, { $inc: { stock: -cartItem.quantity } });
         }
         // Mark cart as completed and clear items
         cart.status = "completed";
@@ -210,4 +221,4 @@ export const checkoutCart = async ({ userId, address }) => {
         return { data: { message: "Internal server error during checkout" }, statusCode: 500 };
     }
 };
-//# sourceMappingURL=cartService.js.map
+exports.checkoutCart = checkoutCart;

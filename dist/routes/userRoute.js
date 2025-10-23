@@ -1,7 +1,12 @@
-import express from "express";
-import { getOrdersForUser, login, register } from "../services/userService.js";
-import validateJWT from "../middlewares/validateJWT.js";
-const router = express.Router();
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const userService_js_1 = require("../services/userService.js");
+const validateJWT_js_1 = __importDefault(require("../middlewares/validateJWT.js"));
+const router = express_1.default.Router();
 router.post('/register', async (request, response) => {
     try {
         console.log('\n=== REGISTER ROUTE HIT ===');
@@ -30,7 +35,7 @@ router.post('/register', async (request, response) => {
             });
         }
         console.log('✓ All fields present, calling register service...');
-        const { statusCode, data } = await register({ firstName, lastName, email, password });
+        const { statusCode, data } = await (0, userService_js_1.register)({ firstName, lastName, email, password });
         console.log('Service response:', { statusCode, data: typeof data === 'string' ? data : '(JWT token)' });
         console.log('=== END REGISTER ROUTE ===\n');
         response.status(statusCode).json({
@@ -50,7 +55,7 @@ router.post('/register', async (request, response) => {
 router.post('/login', async (request, response) => {
     try {
         const { email, password } = request.body;
-        const { statusCode, data } = await login({ email, password });
+        const { statusCode, data } = await (0, userService_js_1.login)({ email, password });
         response.status(statusCode).json({
             success: statusCode === 200,
             data
@@ -65,13 +70,13 @@ router.post('/login', async (request, response) => {
         });
     }
 });
-router.get('/my-orders', validateJWT, async (request, response) => {
+router.get('/my-orders', validateJWT_js_1.default, async (request, response) => {
     try {
         const userId = request.body.userId;
         if (!userId) {
             return response.status(400).json({ message: "userId is required" });
         }
-        const { statusCode, data } = await getOrdersForUser({ userId });
+        const { statusCode, data } = await (0, userService_js_1.getOrdersForUser)({ userId });
         if (statusCode !== 200) {
             return response.status(statusCode).json({ message: data });
         }
@@ -86,5 +91,4 @@ router.get('/my-orders', validateJWT, async (request, response) => {
         });
     }
 });
-export default router;
-//# sourceMappingURL=userRoute.js.map
+exports.default = router;

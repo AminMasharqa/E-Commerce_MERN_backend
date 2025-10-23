@@ -1,5 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.errorHandler = exports.AppError = void 0;
 // Custom error class
-export class AppError extends Error {
+class AppError extends Error {
     statusCode;
     isOperational;
     constructor(message, statusCode = 500) {
@@ -9,8 +12,9 @@ export class AppError extends Error {
         Error.captureStackTrace(this, this.constructor);
     }
 }
+exports.AppError = AppError;
 // Error handler middleware
-export const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
     // Default error values
     let statusCode = 500;
     let message = 'Internal server error';
@@ -64,4 +68,4 @@ export const errorHandler = (err, req, res, next) => {
         }),
     });
 };
-//# sourceMappingURL=errorHandler.js.map
+exports.errorHandler = errorHandler;

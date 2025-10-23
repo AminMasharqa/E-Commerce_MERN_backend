@@ -1,7 +1,12 @@
-import express, { Router } from "express";
-import { getActiveCartForUser, addItemToCart, updateItemInCart, removeItemFromCart, clearCart, checkoutCart } from "../services/cartService.js";
-import validateJWT from "../middlewares/validateJWT.js";
-const router = express.Router();
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cartService_js_1 = require("../services/cartService.js");
+const validateJWT_js_1 = __importDefault(require("../middlewares/validateJWT.js"));
+const router = express_1.default.Router();
 // Helper to get userId consistently across all routes
 function extractUserId(req) {
     // First try to get from JWT middleware (ExtendedRequest)
@@ -14,13 +19,13 @@ function extractUserId(req) {
     return req.user?.id ?? req.body?.userId;
 }
 // GET /cart - Get user's active cart
-router.get("/", validateJWT, async (req, res) => {
+router.get("/", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         if (!userId) {
             return res.status(400).json({ message: "userId is required" });
         }
-        const cart = await getActiveCartForUser({ userId, populateProduct: true });
+        const cart = await (0, cartService_js_1.getActiveCartForUser)({ userId, populateProduct: true });
         return res.status(200).json(cart);
     }
     catch (err) {
@@ -31,7 +36,7 @@ router.get("/", validateJWT, async (req, res) => {
     }
 });
 // POST /cart/items - Add item to cart
-router.post("/items", validateJWT, async (req, res) => {
+router.post("/items", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         if (!userId) {
@@ -47,7 +52,7 @@ router.post("/items", validateJWT, async (req, res) => {
                 message: "quantity must be a positive integer"
             });
         }
-        const result = await addItemToCart({ userId, productId, quantity: qtyNum });
+        const result = await (0, cartService_js_1.addItemToCart)({ userId, productId, quantity: qtyNum });
         return res.status(result.statusCode).json(result.data);
     }
     catch (err) {
@@ -58,7 +63,7 @@ router.post("/items", validateJWT, async (req, res) => {
     }
 });
 // PUT /cart/items - Update item quantity in cart
-router.put("/items", validateJWT, async (req, res) => {
+router.put("/items", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         if (!userId) {
@@ -74,7 +79,7 @@ router.put("/items", validateJWT, async (req, res) => {
                 message: "quantity must be a positive integer"
             });
         }
-        const response = await updateItemInCart({
+        const response = await (0, cartService_js_1.updateItemInCart)({
             userId,
             productId,
             quantity: qtyNum
@@ -89,7 +94,7 @@ router.put("/items", validateJWT, async (req, res) => {
     }
 });
 // DELETE /cart/items/:productId - Remove item from cart
-router.delete("/items/:productId", validateJWT, async (req, res) => {
+router.delete("/items/:productId", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         if (!userId) {
@@ -99,7 +104,7 @@ router.delete("/items/:productId", validateJWT, async (req, res) => {
         if (!productId) {
             return res.status(400).json({ message: "productId is required" });
         }
-        const response = await removeItemFromCart({
+        const response = await (0, cartService_js_1.removeItemFromCart)({
             userId,
             productId
         });
@@ -112,13 +117,13 @@ router.delete("/items/:productId", validateJWT, async (req, res) => {
         });
     }
 });
-router.delete("/", validateJWT, async (req, res) => {
+router.delete("/", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         if (!userId) {
             return res.status(400).json({ message: "userId is required" });
         }
-        const response = await clearCart({ userId });
+        const response = await (0, cartService_js_1.clearCart)({ userId });
         return res.status(response.statusCode).json(response.data);
     }
     catch (err) {
@@ -126,14 +131,14 @@ router.delete("/", validateJWT, async (req, res) => {
         return res.status(500).json({ message: "Failed to clear cart" });
     }
 });
-router.post("/checkout", validateJWT, async (req, res) => {
+router.post("/checkout", validateJWT_js_1.default, async (req, res) => {
     try {
         const userId = extractUserId(req);
         const { address } = req.body;
         if (!userId) {
             return res.status(400).json({ message: "userId is required" });
         }
-        const response = await checkoutCart({ userId, address });
+        const response = await (0, cartService_js_1.checkoutCart)({ userId, address });
         res.status(response.statusCode).json(response.data);
     }
     catch (error) {
@@ -141,5 +146,4 @@ router.post("/checkout", validateJWT, async (req, res) => {
         res.status(500).json({ message: "Failed to checkout" });
     }
 });
-export default router;
-//# sourceMappingURL=cartRoute.js.map
+exports.default = router;
