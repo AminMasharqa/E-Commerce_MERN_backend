@@ -1,6 +1,6 @@
 import express from "express";
-import { getOrdersForUser, login, register } from "../services/userService.ts";
-import validateJWT from "../middlewares/validateJWT.ts";
+import { getOrdersForUser, login, register } from "../services/userService.js";
+import validateJWT from "../middlewares/validateJWT.js";
 
 const router = express.Router();
 

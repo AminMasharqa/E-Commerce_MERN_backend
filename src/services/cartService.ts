@@ -1,7 +1,7 @@
 // If you already have these imports, keep them. Just ensure they're enabled (not commented out).
-import cartModel, { /* optional types like ICart, ICartItem */ } from "../models/cartModel.ts";
-import { orderModel } from "../models/orderModelt.ts";
-import productModel from "../models/productModel.ts";
+import cartModel, { /* optional types like ICart, ICartItem */ } from "../models/cartModel.js";
+import { orderModel } from "../models/orderModelt.js";
+import productModel from "../models/productModel.js";
 
 // ----- Types -----
 type CreateCartForUserParams = { userId: string };

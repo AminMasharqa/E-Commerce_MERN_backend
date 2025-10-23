@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import userModel from "../models/userModel.ts";
+import userModel from "../models/userModel.js";
 
 
 const validateJWT = (req: Request, res: Response, next: NextFunction) => { 

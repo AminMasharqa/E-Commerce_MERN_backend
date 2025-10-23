@@ -6,9 +6,9 @@ import {
   removeItemFromCart,
   clearCart,
   checkoutCart
-} from "../services/cartService.ts";
-import validateJWT from "../middlewares/validateJWT.ts";
-import type { ExtendedRequest } from "../types/extendedRequest.ts";
+} from "../services/cartService.js";
+import validateJWT from "../middlewares/validateJWT.js";
+import type { ExtendedRequest } from "../types/extendedRequest.js";
 
 const router = express.Router();
 

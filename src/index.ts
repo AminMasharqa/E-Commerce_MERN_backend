@@ -12,13 +12,13 @@ import cors from 'cors';
 import { default as helmet } from 'helmet';
 import morgan from 'morgan';
 
-import { connectDatabase, disconnectDatabase } from './config/database.ts';
-import userRoute from './routes/userRoute.ts';
-import productRoute from './routes/productRoute.ts';
-import cartRoute from './routes/cartRoute.ts';
-import { seedInitialProducts } from './services/productService.ts';
-import { errorHandler } from './middlewares/errorHandler.ts';
-import { notFoundHandler } from './middlewares/notFoundHandler.ts';
+import { connectDatabase, disconnectDatabase } from './config/database.js';
+import userRoute from './routes/userRoute.js';
+import productRoute from './routes/productRoute.js';
+import cartRoute from './routes/cartRoute.js';
+import { seedInitialProducts } from './services/productService.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
 
 // Environment variables with validation
 const PORT = parseInt(process.env.PORT || '3001', 10);
