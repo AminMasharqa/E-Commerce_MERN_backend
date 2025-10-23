@@ -33,7 +33,7 @@ router.get("/", validateJWT, async (req: Request, res: Response) => {
       return res.status(400).json({ message: "userId is required" });
     }
 
-    const cart = await getActiveCartForUser({ userId });
+    const cart = await getActiveCartForUser({ userId ,populateProduct:true});
     return res.status(200).json(cart);
   } catch (err: any) {
     console.error('Error fetching cart:', err);

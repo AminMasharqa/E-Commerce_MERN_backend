@@ -5,7 +5,7 @@ import productModel from "../models/productModel.ts";
 
 // ----- Types -----
 type CreateCartForUserParams = { userId: string };
-type GetActiveCartForUserParams = { userId: string };
+type GetActiveCartForUserParams = { userId: string, populateProduct?: boolean };
 type AddItemToCartParams = { userId: string; productId: string; quantity: number };
 type UpdateItemInCartParams = { productId: any; quantity: number; userId: string };
 
@@ -28,10 +28,18 @@ const createCartForUser = async ({ userId }: CreateCartForUserParams) => {
   return cart;
 };
 
-export const getActiveCartForUser = async ({ userId }: GetActiveCartForUserParams) => {
+export const getActiveCartForUser = async ({ userId, populateProduct }: GetActiveCartForUserParams) => {
   try {
     if (!userId) throw new Error("userId is required");
-    let cart = await cartModel.findOne({ userId, status: "active" });
+    let cart;
+    if (populateProduct) {
+
+      cart = await cartModel.findOne({ userId, status: "active" }).populate('items.productId');
+    }
+    else {
+      cart = await cartModel.findOne({ userId, status: "active" });
+
+    }
     if (!cart) cart = await createCartForUser({ userId });
     return cart;
   } catch (error) {
@@ -78,7 +86,8 @@ export const addItemToCart = async ({
     cart.totalAmount = computeTotalAmount(cart.items);
     await cart.save();
 
-    return { data: cart, statusCode: 200 };
+    const updatedCart = await getActiveCartForUser({userId,populateProduct:true});
+    return { data: updatedCart, statusCode: 200 };
   } catch (error) {
     console.error('Error adding item to cart:', error);
     return { data: { message: "Failed to add item to cart" }, statusCode: 500 };
@@ -97,7 +106,7 @@ export const updateItemInCart = async ({
     const existingItem = cart.items.find(
       (p: any) => p.productId?.toString?.() === productId
     );
-    
+
     if (!existingItem) {
       return { data: { message: "Item does not exist in the cart" }, statusCode: 400 };
     }
@@ -119,7 +128,8 @@ export const updateItemInCart = async ({
     cart.totalAmount = computeTotalAmount(cart.items);
     await cart.save();
 
-    return { data: cart, statusCode: 200 };
+    const updatedCart = await getActiveCartForUser({userId,populateProduct:true});
+    return { data: updatedCart, statusCode: 200 };
   } catch (error) {
     console.error('Error updating cart item:', error);
     return { data: { message: "Internal server error" }, statusCode: 500 };
@@ -152,7 +162,8 @@ export const removeItemFromCart = async ({
     cart.totalAmount = computeTotalAmount(cart.items);
     await cart.save();
 
-    return { data: cart, statusCode: 200 };
+    const updatedCart = await getActiveCartForUser({userId,populateProduct:true});
+    return { data: updatedCart, statusCode: 200 };
   } catch (error) {
     console.error("Error removing cart item:", error);
     return { data: { message: "Internal server error" }, statusCode: 500 };
@@ -175,9 +186,9 @@ export const clearCart = async ({ userId }: ClearCartParams): Promise<ServiceRes
 };
 
 
-type CheckoutCartParams = { userId: string , address: string };
+type CheckoutCartParams = { userId: string, address: string };
 
-export const checkoutCart = async ({ 
+export const checkoutCart = async ({
   userId,
   address
 }: CheckoutCartParams): Promise<ServiceResult<any>> => {
@@ -197,18 +208,18 @@ export const checkoutCart = async ({
     for (const cartItem of cart.items) {
       const product = await productModel.findById(cartItem.productId);
       if (!product) {
-        return { 
-          data: { message: `Product not found: ${cartItem.productId}` }, 
-          statusCode: 400 
+        return {
+          data: { message: `Product not found: ${cartItem.productId}` },
+          statusCode: 400
         };
       }
-      
+
       if (product.stock < cartItem.quantity) {
-        return { 
-          data: { 
-            message: `Insufficient stock for ${product.title}. Available: ${product.stock}, Requested: ${cartItem.quantity}` 
-          }, 
-          statusCode: 400 
+        return {
+          data: {
+            message: `Insufficient stock for ${product.title}. Available: ${product.stock}, Requested: ${cartItem.quantity}`
+          },
+          statusCode: 400
         };
       }
     }
@@ -248,11 +259,11 @@ export const checkoutCart = async ({
     cart.totalAmount = 0;
     await cart.save();
 
-    return { 
-      data: { 
-        message: "Order placed successfully", 
-        order: newOrder 
-      }, 
+    return {
+      data: {
+        message: "Order placed successfully",
+        order: newOrder
+      },
       statusCode: 200
     };
 
