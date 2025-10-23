@@ -9,7 +9,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 
 
 import cors from 'cors';
-import helmet from 'helmet';
+import { default as helmet } from 'helmet';
 import morgan from 'morgan';
 
 import { connectDatabase, disconnectDatabase } from './config/database.ts';
