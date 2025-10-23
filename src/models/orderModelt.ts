@@ -15,7 +15,11 @@ export interface IOrderItem extends Document {
 export interface IOrder extends Document {
     orderItems: IOrderItem[];
     total: number;
+    subtotal?: number;
+    shipping?: number;
+    tax?: number;
     address: string;
+    status?: string;
 
     userId: string | ObjectId;
 
@@ -33,9 +37,14 @@ const orderItemSchema = new Schema<IOrderItem>({
 const orderSchema = new Schema<IOrder>({
     orderItems: {type: [orderItemSchema], required: true},
     total: {type: Number, required: true},
+    subtotal: {type: Number},
+    shipping: {type: Number},
+    tax: {type: Number},
     address: {type: String, required: true},
+    status: {type: String, default: 'pending'},
     userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
-    
+}, {
+    timestamps: true
 });
 
 export const orderModel = mongoose.model<IOrder>("Order", orderSchema);

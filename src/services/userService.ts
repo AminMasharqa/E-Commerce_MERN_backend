@@ -1,6 +1,7 @@
 import userModel from "../models/userModel.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { orderModel } from "../models/orderModelt.ts";
 
 interface RegisterParams {
     firstName: string;
@@ -61,5 +62,19 @@ const generateJWT = (data:any) =>{
         throw new Error('JWT_SECRET environment variable is required');
     }
     return jwt.sign(data, jwtSecret);
+}
+
+
+interface GetOrdersForUserParams {
+    userId: string;
+}
+export const getOrdersForUser = async ({ userId }: GetOrdersForUserParams) => {
+    try {
+        const orders = await orderModel.find({ userId });
+        return {data:orders,statusCode:200};
+    } catch (error) {
+        console.error('Error in getOrdersForUser:', error);
+        return {data:"Failed to get orders",statusCode:500};
+    }
 }
 

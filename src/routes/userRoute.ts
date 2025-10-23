@@ -1,5 +1,6 @@
 import express from "express";
-import { login, register } from "../services/userService.ts";
+import { getOrdersForUser, login, register } from "../services/userService.ts";
+import validateJWT from "../middlewares/validateJWT.ts";
 
 const router = express.Router();
 
@@ -70,6 +71,27 @@ router.post('/login', async (request, response) => {
     response.status(500).json({ 
       success: false,
       message: 'Login failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/my-orders', validateJWT, async (request, response) => {
+  try {
+    const userId = request.body.userId;
+    if (!userId) {
+      return response.status(400).json({ message: "userId is required" });
+    }
+    const {statusCode,data} = await getOrdersForUser({ userId });
+    if (statusCode !== 200) {
+      return response.status(statusCode).json({ message: data });
+    }
+    return response.status(statusCode).json(data);
+  } catch (error) {
+    console.error('Error in my-orders route:', error);
+    response.status(500).json({ 
+      success: false,
+      message: 'Failed to get orders',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

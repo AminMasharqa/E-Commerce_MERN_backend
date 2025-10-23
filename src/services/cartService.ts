@@ -237,12 +237,21 @@ export const checkoutCart = async ({
       })
     );
 
+    // Calculate order breakdown (similar to frontend)
+    const subtotal = cart.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const shipping = subtotal >= 50 ? 0 : 5.99;
+    const tax = subtotal * 0.085;
+
     // Create the order
     const newOrder = await orderModel.create({
       orderItems,
       total: cart.totalAmount,
+      subtotal: Math.round(subtotal * 100) / 100,
+      shipping: shipping,
+      tax: Math.round(tax * 100) / 100,
       userId: cart.userId,
       address,
+      status: 'pending',
     });
 
     // Update product stock (decrement by purchased quantity)
