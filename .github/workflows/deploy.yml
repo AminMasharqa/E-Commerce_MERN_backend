@@ -1,0 +1,69 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/e-commerce-backend
+            git pull origin main
+            chmod +x deploy-aws.sh
+            ./deploy-aws.sh
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Wait for container to be healthy
+            sleep 10
+            
+            # Check if container is running
+            if docker ps | grep -q ecommerce-backend; then
+              echo "✅ Container is running"
+              docker ps | grep ecommerce-backend
+            else
+              echo "❌ Container is not running"
+              docker logs ecommerce-backend
+              exit 1
+            fi
+            
+            # Test health endpoint
+            if curl -f http://localhost:3001/health; then
+              echo "✅ Health check passed"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "API is live at: http://${{ secrets.EC2_HOST }}:3001"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check logs above."
+
